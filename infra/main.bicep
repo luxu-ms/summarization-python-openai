@@ -12,7 +12,7 @@ param storageAccountName string = ''
 param searchServicesName string = ''
 
 @description('Id of the user or app to assign application roles')
-param principalId string = ''
+param principalId string
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(resourceGroup().id, location))
