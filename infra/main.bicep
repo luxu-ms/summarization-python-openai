@@ -1,16 +1,13 @@
-targetScope = 'subscription'
-
 @minLength(1)
 @maxLength(64)
 @description('Name of the the environment which is used to generate a short unique hash used in all resources.')
-param environmentName string
+param environmentName string = 'test'
 
 @minLength(1)
 @description('Primary location for all resources')
-param location string
+param location string = resourceGroup().location
 
 param openAiAccountName string = ''
-param resourceGroupName string = ''
 param storageAccountName string = ''
 param searchServicesName string = ''
 
@@ -18,18 +15,10 @@ param searchServicesName string = ''
 param principalId string = ''
 
 var abbrs = loadJsonContent('./abbreviations.json')
-var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+var resourceToken = toLower(uniqueString(resourceGroup().id, location))
 var tags = { 'azd-env-name': environmentName }
 
-// Organize resources in a resource group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
-  location: location
-  tags: tags
-}
-
 module openAiAccount 'core/ai/openai-account.bicep' = {
-  scope: rg
   name: 'openai'
   params: {
     name: !empty(openAiAccountName) ? openAiAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
@@ -74,7 +63,6 @@ module openAiAccount 'core/ai/openai-account.bicep' = {
 }
 
 module searchServices 'core/search/search-services.bicep' = {
-  scope: rg
   name: 'search-services'
   params: {
     name: !empty(searchServicesName) ? searchServicesName : '${abbrs.searchSearchServices}${resourceToken}'
@@ -86,7 +74,6 @@ module searchServices 'core/search/search-services.bicep' = {
 // Backing storage for Azure functions backend API
 module storage 'core/storage/storage-account.bicep' = {
   name: 'storage'
-  scope: rg
   params: {
     name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
     location: location
@@ -101,7 +88,6 @@ module storage 'core/storage/storage-account.bicep' = {
 }
 
 module searchRole 'core/security/role.bicep' = {
-  scope: rg
   name: 'search-role'
   params: {
     principalId: principalId
@@ -111,7 +97,6 @@ module searchRole 'core/security/role.bicep' = {
 }
 
 module searchIndexDataReaderRole 'core/security/role.bicep' = {
-  scope: rg
   name: 'search-index-data-reader-role'
   params: {
     principalId: principalId
@@ -121,7 +106,6 @@ module searchIndexDataReaderRole 'core/security/role.bicep' = {
 }
 
 module searchServiceContribRole 'core/security/role.bicep' = {
-  scope: rg
   name: 'search-service-contrib-role'
   params: {
     principalId: principalId
@@ -132,7 +116,6 @@ module searchServiceContribRole 'core/security/role.bicep' = {
 
 
 module blobRole 'core/security/role.bicep' = {
-  scope: rg
   name: 'blob-role'
   params: {
     principalId: principalId
@@ -142,7 +125,6 @@ module blobRole 'core/security/role.bicep' = {
 }
 
 module openAiRole 'core/security/role.bicep' = {
-  scope: rg
   name: 'openai-role'
   params: {
     principalId: principalId
